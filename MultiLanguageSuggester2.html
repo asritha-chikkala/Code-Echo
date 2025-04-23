@@ -1,0 +1,611 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Code Suggester</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .editor-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 20px;
+        }
+        .file-info {
+            display: flex;
+            margin-bottom: 10px;
+        }
+        .file-info input {
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            margin-right: 10px;
+            flex-grow: 1;
+        }
+        .language-badge {
+            padding: 5px 10px;
+            border-radius: 4px;
+            background-color: #eee;
+            font-size: 14px;
+            display: inline-block;
+        }
+        .language-java {
+            background-color: #5382a1;
+            color: white;
+        }
+        .language-c {
+            background-color: #a9b9cb;
+            color: #333;
+        }
+        .language-unknown {
+            background-color: #999;
+            color: white;
+        }
+        #editor {
+            width: 100%;
+            height: 300px;
+            padding: 12px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 14px;
+            line-height: 1.5;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            resize: vertical;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .suggestions-container {
+            position: absolute;
+            background-color: white;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            z-index: 10;
+            max-height: 200px;
+            overflow-y: auto;
+            width: auto;
+            min-width: 150px;
+            display: none;
+        }
+        .suggestion-item {
+            padding: 8px 12px;
+            cursor: pointer;
+        }
+        .suggestion-item:hover, .suggestion-item.selected {
+            background-color: #f0f7ff;
+        }
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #e9f7fe;
+            border-radius: 4px;
+            border-left: 4px solid #5382a1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1> Code Suggester</h1>
+        
+        <div class="editor-container">
+            <div class="file-info">
+                <input type="text" id="filename" placeholder="Enter filename (e.g., Main.java or main.c)" value="Main.java">
+                <div class="language-badge" id="language-badge">Detecting...</div>
+            </div>
+            <textarea id="editor" placeholder="Start typing your code here..."></textarea>
+            <div id="suggestions" class="suggestions-container"></div>
+        </div>
+        
+        <div class="info-panel">
+            <h3>How to use:</h3>
+            <p>1. Enter a filename with appropriate extension (.java, .c, etc.)</p>
+            <p>2. Start typing your code</p>
+            <p>3. As you type, language-appropriate suggestions will appear</p>
+            <p>4. Use up/down arrow keys to navigate suggestions</p>
+            <p>5. Press Tab or Enter to accept a suggestion</p>
+        </div>
+    </div>
+   
+
+    <script>
+        // Enum for code languages
+        const CodeLanguage = {
+            JAVA: 'JAVA',
+            C: 'C',
+            UNKNOWN: 'UNKNOWN'
+        };
+
+        // KeywordNode class for the trie
+        class KeywordNode {
+            constructor(value = '\0') {
+                this.value = value;
+                this.isEndOfWord = false;
+                this.frequencyByLanguage = {};
+                this.children = {};
+            }
+            
+            getFrequency(language) {
+                return this.frequencyByLanguage[language] || 0;
+            }
+        }
+
+        // MultiLanguageSuggester class
+        class MultiLanguageSuggester {
+            constructor(maxSuggestions = 5) {
+                this.root = new KeywordNode();
+                this.maxSuggestions = maxSuggestions;
+                
+                // Define language detection patterns
+                this.JAVA_FILE_EXTENSIONS = ['.java', '.jsp', '.jspx', '.jsf'];
+                this.C_FILE_EXTENSIONS = ['.c', '.h', '.cpp', '.hpp', '.cc'];
+                
+                this.initializeKeywords();
+            }
+            
+            // Insert a keyword with its frequency for a specific language
+            insert(word, language, frequency) {
+                if (!word || word.length === 0) return;
+                
+                let current = this.root;
+                for (const c of word) {
+                    if (!current.children[c]) {
+                        current.children[c] = new KeywordNode(c);
+                    }
+                    current = current.children[c];
+                }
+                current.isEndOfWord = true;
+                // Update frequency for this language
+                current.frequencyByLanguage[language] = 
+                    (current.frequencyByLanguage[language] || 0) + frequency;
+            }
+            
+            // Initialize keywords for both languages
+            initializeKeywords() {
+                // Add Java keywords (same as in the Java implementation)
+                this.insert("public", CodeLanguage.JAVA, 100);
+                this.insert("private", CodeLanguage.JAVA, 90);
+                this.insert("protected", CodeLanguage.JAVA, 70);
+                this.insert("class", CodeLanguage.JAVA, 95);
+                this.insert("interface", CodeLanguage.JAVA, 65);
+                this.insert("extends", CodeLanguage.JAVA, 70);
+                this.insert("implements", CodeLanguage.JAVA, 65);
+                this.insert("import", CodeLanguage.JAVA, 100);
+                this.insert("package", CodeLanguage.JAVA, 90);
+                this.insert("static", CodeLanguage.JAVA, 85);
+                this.insert("final", CodeLanguage.JAVA, 80);
+                this.insert("void", CodeLanguage.JAVA, 95);
+                this.insert("int", CodeLanguage.JAVA, 90);
+                this.insert("String", CodeLanguage.JAVA, 95);
+                this.insert("boolean", CodeLanguage.JAVA, 85);
+                this.insert("double", CodeLanguage.JAVA, 75);
+                this.insert("float", CodeLanguage.JAVA, 65);
+                this.insert("long", CodeLanguage.JAVA, 70);
+                this.insert("char", CodeLanguage.JAVA, 60);
+                this.insert("byte", CodeLanguage.JAVA, 50);
+                this.insert("return", CodeLanguage.JAVA, 95);
+                this.insert("if", CodeLanguage.JAVA, 90);
+                this.insert("else", CodeLanguage.JAVA, 85);
+                this.insert("for", CodeLanguage.JAVA, 90);
+                this.insert("while", CodeLanguage.JAVA, 80);
+                this.insert("do", CodeLanguage.JAVA, 65);
+                this.insert("switch", CodeLanguage.JAVA, 70);
+                this.insert("case", CodeLanguage.JAVA, 65);
+                this.insert("break", CodeLanguage.JAVA, 75);
+                this.insert("continue", CodeLanguage.JAVA, 65);
+                this.insert("new", CodeLanguage.JAVA, 95);
+                this.insert("this", CodeLanguage.JAVA, 90);
+                this.insert("super", CodeLanguage.JAVA, 70);
+                this.insert("null", CodeLanguage.JAVA, 85);
+                this.insert("true", CodeLanguage.JAVA, 80);
+                this.insert("false", CodeLanguage.JAVA, 80);
+                this.insert("try", CodeLanguage.JAVA, 75);
+                this.insert("catch", CodeLanguage.JAVA, 70);
+                this.insert("finally", CodeLanguage.JAVA, 65);
+                this.insert("throw", CodeLanguage.JAVA, 60);
+                this.insert("throws", CodeLanguage.JAVA, 55);
+                this.insert("abstract", CodeLanguage.JAVA, 50);
+                this.insert("synchronized", CodeLanguage.JAVA, 45);
+                this.insert("volatile", CodeLanguage.JAVA, 40);
+                this.insert("System", CodeLanguage.JAVA, 85);
+                this.insert("System.out.println", CodeLanguage.JAVA, 80);
+                
+                // Add C keywords (same as in the Java implementation)
+                this.insert("int", CodeLanguage.C, 95);
+                this.insert("char", CodeLanguage.C, 85);
+                this.insert("float", CodeLanguage.C, 80);
+                this.insert("double", CodeLanguage.C, 80);
+                this.insert("void", CodeLanguage.C, 90);
+                this.insert("long", CodeLanguage.C, 75);
+                this.insert("short", CodeLanguage.C, 70);
+                this.insert("unsigned", CodeLanguage.C, 70);
+                this.insert("signed", CodeLanguage.C, 65);
+                this.insert("const", CodeLanguage.C, 85);
+                this.insert("static", CodeLanguage.C, 80);
+                this.insert("extern", CodeLanguage.C, 60);
+                this.insert("volatile", CodeLanguage.C, 55);
+                this.insert("register", CodeLanguage.C, 50);
+                this.insert("auto", CodeLanguage.C, 40);
+                this.insert("struct", CodeLanguage.C, 85);
+                this.insert("union", CodeLanguage.C, 65);
+                this.insert("enum", CodeLanguage.C, 70);
+                this.insert("typedef", CodeLanguage.C, 75);
+                this.insert("sizeof", CodeLanguage.C, 70);
+                this.insert("return", CodeLanguage.C, 95);
+                this.insert("if", CodeLanguage.C, 90);
+                this.insert("else", CodeLanguage.C, 85);
+                this.insert("switch", CodeLanguage.C, 75);
+                this.insert("case", CodeLanguage.C, 70);
+                this.insert("default", CodeLanguage.C, 65);
+                this.insert("for", CodeLanguage.C, 90);
+                this.insert("while", CodeLanguage.C, 85);
+                this.insert("do", CodeLanguage.C, 70);
+                this.insert("break", CodeLanguage.C, 80);
+                this.insert("continue", CodeLanguage.C, 75);
+                this.insert("goto", CodeLanguage.C, 40);
+                this.insert("NULL", CodeLanguage.C, 85);
+                this.insert("printf", CodeLanguage.C, 90);
+                this.insert("scanf", CodeLanguage.C, 85);
+                this.insert("fprintf", CodeLanguage.C, 75);
+                this.insert("fscanf", CodeLanguage.C, 70);
+                this.insert("malloc", CodeLanguage.C, 80);
+                this.insert("calloc", CodeLanguage.C, 70);
+                this.insert("realloc", CodeLanguage.C, 65);
+                this.insert("free", CodeLanguage.C, 80);
+                this.insert("FILE", CodeLanguage.C, 75);
+                this.insert("fopen", CodeLanguage.C, 70);
+                this.insert("fclose", CodeLanguage.C, 70);
+                this.insert("include", CodeLanguage.C, 95);
+                this.insert("#include", CodeLanguage.C, 100);
+                this.insert("#define", CodeLanguage.C, 90);
+                this.insert("#ifdef", CodeLanguage.C, 75);
+                this.insert("#ifndef", CodeLanguage.C, 75);
+                this.insert("#endif", CodeLanguage.C, 75);
+            }
+            
+            // Detect language from code content and filename
+            detectLanguage(code, filename) {
+                // First check by file extension
+                if (filename) {
+                    const lowercaseFilename = filename.toLowerCase();
+                    
+                    for (const ext of this.JAVA_FILE_EXTENSIONS) {
+                        if (lowercaseFilename.endsWith(ext)) {
+                            return CodeLanguage.JAVA;
+                        }
+                    }
+                    
+                    for (const ext of this.C_FILE_EXTENSIONS) {
+                        if (lowercaseFilename.endsWith(ext)) {
+                            return CodeLanguage.C;
+                        }
+                    }
+                }
+                
+                // No conclusive evidence from filename, analyze code content
+                if (!code) {
+                    return CodeLanguage.UNKNOWN;
+                }
+                
+                // Look for language-specific patterns
+                let javaScore = 0;
+                let cScore = 0;
+                
+                // Java indicators
+                if (code.includes("public class") || code.includes("import java")) javaScore += 10;
+                if (code.includes("System.out.println")) javaScore += 5;
+                if (code.includes("public static void main(String[] args)")) javaScore += 10;
+                if (code.includes("@Override") || code.includes("extends") || code.includes("implements")) javaScore += 5;
+                
+                // C indicators
+                if (code.includes("#include")) cScore += 10;
+                if (code.includes("printf(") || code.includes("scanf(")) cScore += 5;
+                if (code.includes("malloc(") || code.includes("free(")) cScore += 5;
+                if (code.includes("int main(") || code.includes("void main(")) cScore += 5;
+                if (code.includes("->")) cScore += 3; // Structure pointer access
+                
+                if (javaScore > cScore) return CodeLanguage.JAVA;
+                if (cScore > javaScore) return CodeLanguage.C;
+                
+                return CodeLanguage.UNKNOWN;
+            }
+            
+            // Get suggestions for a specific language
+            getSuggestions(prefix, language) {
+                if (language === CodeLanguage.UNKNOWN) {
+                    // If language is unknown, try to provide suggestions from both languages
+                    let suggestions = [];
+                    suggestions = suggestions.concat(this.getSuggestionsWithLanguage(prefix, CodeLanguage.JAVA));
+                    suggestions = suggestions.concat(this.getSuggestionsWithLanguage(prefix, CodeLanguage.C));
+                    
+                    // Remove duplicates and limit
+                    return Array.from(new Set(suggestions)).slice(0, this.maxSuggestions);
+                } else {
+                    return this.getSuggestionsWithLanguage(prefix, language);
+                }
+            }
+            
+            // Get suggestions for a specific language
+            getSuggestionsWithLanguage(prefix, language) {
+                // Find the node corresponding to the prefix
+                let prefixNode = this.root;
+                for (const c of prefix) {
+                    if (!prefixNode.children[c]) {
+                        return []; // Prefix not found
+                    }
+                    prefixNode = prefixNode.children[c];
+                }
+                
+                // Create a priority queue (we'll simulate with an array and sort)
+                let priorityQueue = [];
+                
+                // Use BFS to find all words with this prefix
+                let queue = [{ node: prefixNode, currentWord: prefix }];
+                
+                while (queue.length > 0 && priorityQueue.length < this.maxSuggestions * 2) {
+                    const current = queue.shift();
+                    const node = current.node;
+                    const currentWord = current.currentWord;
+                    
+                    // If this is a complete word with frequency in this language, add to suggestions
+                    if (node.isEndOfWord && node.getFrequency(language) > 0) {
+                        priorityQueue.push({
+                            word: currentWord,
+                            frequency: node.getFrequency(language)
+                        });
+                    }
+                    
+                    // Add all children to the queue (BFS)
+                    for (const [char, childNode] of Object.entries(node.children)) {
+                        queue.push({ node: childNode, currentWord: currentWord + char });
+                    }
+                }
+                
+                // Sort by frequency descending
+                priorityQueue.sort((a, b) => b.frequency - a.frequency);
+                
+                // Extract top suggestions
+                return priorityQueue.slice(0, this.maxSuggestions).map(item => item.word);
+            }
+        }
+
+        // Initialize the suggester
+        const suggester = new MultiLanguageSuggester(5);
+        
+        // DOM elements
+        const editor = document.getElementById('editor');
+        const filename = document.getElementById('filename');
+        const languageBadge = document.getElementById('language-badge');
+        const suggestionsContainer = document.getElementById('suggestions');
+        
+        // Current state
+        let currentLanguage = CodeLanguage.UNKNOWN;
+        let selectedSuggestionIndex = -1;
+        let currentSuggestions = [];
+        let currentPrefix = '';
+        let cursorPosition = { line: 0, column: 0 };
+        
+        // Update language detection
+        function updateLanguageDetection() {
+            const code = editor.value;
+            const file = filename.value;
+            
+            currentLanguage = suggester.detectLanguage(code, file);
+            
+            // Update UI
+            languageBadge.textContent = currentLanguage;
+            languageBadge.className = 'language-badge language-' + currentLanguage.toLowerCase();
+        }
+        
+        // Get current word being typed
+        function getCurrentWord() {
+            const text = editor.value;
+            const cursorPos = editor.selectionStart;
+            
+            let start = cursorPos;
+            // Move backward until we find a non-word character or beginning of text
+            while (start > 0 && /[a-zA-Z0-9_#.]/.test(text.charAt(start - 1))) {
+                start--;
+            }
+            
+            return {
+                word: text.substring(start, cursorPos),
+                startPos: start,
+                endPos: cursorPos
+            };
+        }
+        
+        // Show suggestions with improved positioning
+        function showSuggestions() {
+            const { word, startPos } = getCurrentWord();
+            
+            if (word.length === 0) {
+                hideSuggestions();
+                return;
+            }
+            
+            currentPrefix = word;
+            currentSuggestions = suggester.getSuggestions(word, currentLanguage);
+            
+            if (currentSuggestions.length === 0) {
+                hideSuggestions();
+                return;
+            }
+            
+            // Position the suggestions container - UPDATED CODE
+            const editorRect = editor.getBoundingClientRect();
+            const textBeforeCursor = editor.value.substring(0, startPos);
+            const lines = textBeforeCursor.split('\n');
+            const cursorLine = lines.length - 1;
+            const cursorColumn = lines[cursorLine].length;
+            
+            // Create a temporary element to measure text width more accurately
+            const tempElement = document.createElement('div');
+            tempElement.style.position = 'absolute';
+            tempElement.style.visibility = 'hidden';
+            tempElement.style.whiteSpace = 'pre';
+            tempElement.style.fontFamily = 'Consolas, Courier New, monospace';
+            tempElement.style.fontSize = '14px';
+            tempElement.textContent = lines[cursorLine];
+            document.body.appendChild(tempElement);
+            const charWidth = tempElement.getBoundingClientRect().width / lines[cursorLine].length || 8;
+            document.body.removeChild(tempElement);
+            
+            // Calculate the position based on cursor position and scroll offsets
+            const lineHeight = 21; // Approximate line height
+            const top = editorRect.top + (cursorLine * lineHeight) - editor.scrollTop + lineHeight + window.scrollY;
+            const left = editorRect.left + (cursorColumn * charWidth) - editor.scrollLeft + window.scrollX;
+            
+            suggestionsContainer.style.top = `${top}px`;
+            suggestionsContainer.style.left = `${left}px`;
+            
+            // Populate suggestions
+            suggestionsContainer.innerHTML = '';
+            currentSuggestions.forEach((suggestion, index) => {
+                const item = document.createElement('div');
+                item.className = 'suggestion-item';
+                item.textContent = suggestion;
+                item.dataset.index = index;
+                item.addEventListener('click', () => {
+                    applySuggestion(suggestion);
+                });
+                
+                suggestionsContainer.appendChild(item);
+            });
+            
+            suggestionsContainer.style.display = 'block';
+            selectedSuggestionIndex = -1;
+        }
+        
+        // Hide suggestions
+        function hideSuggestions() {
+            suggestionsContainer.style.display = 'none';
+            selectedSuggestionIndex = -1;
+        }
+        
+        // Apply the selected suggestion
+        function applySuggestion(suggestion) {
+            const { word, startPos, endPos } = getCurrentWord();
+            
+            // Replace the current word with the suggestion
+            const newText = editor.value.substring(0, startPos) + 
+                           suggestion + 
+                           editor.value.substring(endPos);
+            
+            // Update editor
+            editor.value = newText;
+            
+            // Position cursor at the end of the inserted suggestion
+            editor.selectionStart = editor.selectionEnd = startPos + suggestion.length;
+            
+            // Hide suggestions
+            hideSuggestions();
+            
+            // Focus back on editor
+            editor.focus();
+        }
+        
+        // Navigate through suggestions
+        function navigateSuggestions(direction) {
+            if (currentSuggestions.length === 0) return;
+            
+            // Clear previous selection
+            const items = suggestionsContainer.querySelectorAll('.suggestion-item');
+            if (selectedSuggestionIndex >= 0) {
+                items[selectedSuggestionIndex].classList.remove('selected');
+            }
+            
+            // Update selection index
+            if (direction === 'up') {
+                selectedSuggestionIndex = selectedSuggestionIndex <= 0 ? 
+                    currentSuggestions.length - 1 : selectedSuggestionIndex - 1;
+            } else {
+                selectedSuggestionIndex = (selectedSuggestionIndex + 1) % currentSuggestions.length;
+            }
+            
+            // Apply new selection
+            items[selectedSuggestionIndex].classList.add('selected');
+        }
+        
+        // Event: Text input in editor
+        editor.addEventListener('input', () => {
+            updateLanguageDetection();
+            showSuggestions();
+        });
+        
+        // Event: Filename change
+        filename.addEventListener('change', updateLanguageDetection);
+        
+        // Event: Key navigation in suggestions
+        editor.addEventListener('keydown', (e) => {
+            if (suggestionsContainer.style.display === 'block') {
+                switch (e.key) {
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        navigateSuggestions('up');
+                        break;
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        navigateSuggestions('down');
+                        break;
+                    case 'Tab':
+                    case 'Enter':
+                        if (selectedSuggestionIndex >= 0) {
+                            e.preventDefault();
+                            applySuggestion(currentSuggestions[selectedSuggestionIndex]);
+                        } else if (currentSuggestions.length > 0) {
+                            e.preventDefault();
+                            applySuggestion(currentSuggestions[0]);
+                        }
+                        break;
+                    case 'Escape':
+                        hideSuggestions();
+                        break;
+                }
+            }
+        });
+        
+        // Event: Click outside to hide suggestions
+        document.addEventListener('click', (e) => {
+            if (!suggestionsContainer.contains(e.target) && e.target !== editor) {
+                hideSuggestions();
+            }
+        });
+        
+        // Add cursor position tracking
+        editor.addEventListener('click', showSuggestions);
+        editor.addEventListener('keyup', (e) => {
+            // Only show suggestions on navigation keys
+            if (['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) {
+                showSuggestions();
+            }
+        });
+        
+        // Initial language detection
+        updateLanguageDetection();
+        
+
+
+
+        
+
+
+    </script>
+</body>
+</html>
