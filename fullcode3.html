@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title> Code Generation</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        #prompt {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 100px;
+        }
+        #generateButton {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin: 0 auto 20px;
+        }
+        #generateButton:hover {
+            background-color: #45a049;
+        }
+        #responseOutput {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            background-color: #f9f9f9;
+            white-space: pre-wrap;
+            font-family: monospace;
+            overflow-x: auto;
+        }
+        .loading {
+            text-align: center;
+            display: none;
+            margin: 10px 0;
+        }
+        .controls {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+        }
+        #copyButton {
+            background-color: #2196F3;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            display: none;
+        }
+        #copyButton:hover {
+            background-color: #0b7dda;
+        }
+        .syntax-highlight {
+            background-color: #f0f0f0;
+            border-left: 3px solid #2196F3;
+            padding-left: 10px;
+        }
+        .history-panel {
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            margin-top: 20px;
+            display: none; /* Initially hidden */
+        }
+        .history-title {
+            margin-top: 0;
+            padding-bottom: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .history-item {
+            padding: 8px;
+            margin-bottom: 5px;
+            background-color: #f0f0f0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .history-item:hover {
+            background-color: #e0e0e0;
+        }
+        .history-controls {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 10px;
+        }
+        .history-button {
+            background-color: #607d8b;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .history-button:hover {
+            background-color: #455a64;
+        }
+        #seeHistoryBtn {
+            background-color: #673AB7;
+            color: white;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-top: 20px;
+            display: block;
+        }
+        #seeHistoryBtn:hover {
+            background-color: #5E35B1;
+        }
+    </style>
+</head>
+<body>
+    <h1> Code Generation</h1>
+    
+    <textarea id="prompt" placeholder="Enter your prompt for code generation here..."></textarea>
+    
+    <div class="controls">
+        <button id="generateButton">Generate Code</button>
+        <button id="copyButton">Copy Code</button>
+    </div>
+    
+    <div class="loading" id="loadingIndicator">
+        <p>Generating code...</p>
+    </div>
+    
+    <div id="responseOutput"></div>
+    
+    <!-- Button to show/hide history -->
+    <button id="seeHistoryBtn">See History</button>
+    
+    <!-- Stack panel (initially hidden) -->
+    <div id="historyPanel" class="history-panel">
+        <h3 class="history-title">Recent History</h3>
+        <div id="stackItems"></div>
+        <div class="history-controls">
+            <button id="clearStackBtn" class="history-button">Clear History</button>
+            <button id="saveStackBtn" class="history-button">Save History</button>
+        </div>
+    </div>
+
+    <script>
+        // API key hardcoded directly in the code - replace with your actual key
+        const apiKey = "replace with ur API key";
+        
+        // Stack implementation for most recent history
+        class HistoryStack {
+            constructor(maxSize = 10) {
+                this.items = [];
+                this.maxSize = maxSize;
+            }
+            
+            push(item) {
+                // Add to the beginning (top of stack)
+                this.items.unshift(item);
+                
+                // If we exceed max size, remove the oldest item
+                if (this.items.length > this.maxSize) {
+                    this.items.pop();
+                }
+                
+                // Save to localStorage
+                this.saveToLocalStorage();
+            }
+            
+            pop() {
+                if (this.isEmpty()) {
+                    return null;
+                }
+                const item = this.items.shift();
+                this.saveToLocalStorage();
+                return item;
+            }
+            
+            peek() {
+                if (this.isEmpty()) {
+                    return null;
+                }
+                return this.items[0];
+            }
+            
+            isEmpty() {
+                return this.items.length === 0;
+            }
+            
+            clear() {
+                this.items = [];
+                this.saveToLocalStorage();
+            }
+            
+            getItems() {
+                return [...this.items];
+            }
+            
+            saveToLocalStorage() {
+                localStorage.setItem('codeGenerationHistory', JSON.stringify(this.items));
+            }
+            
+            loadFromLocalStorage() {
+                const saved = localStorage.getItem('codeGenerationHistory');
+                if (saved) {
+                    try {
+                        this.items = JSON.parse(saved);
+                    } catch (e) {
+                        console.error("Failed to parse history from localStorage", e);
+                        this.items = [];
+                    }
+                }
+            }
+        }
+        
+        // Initialize stack
+        const historyStack = new HistoryStack(10);
+        
+        // Load data from localStorage
+        historyStack.loadFromLocalStorage();
+        
+        // Toggle history button functionality
+        document.getElementById('seeHistoryBtn').addEventListener('click', function() {
+            const historyPanel = document.getElementById('historyPanel');
+            
+            if (historyPanel.style.display === 'block') {
+                historyPanel.style.display = 'none';
+                this.textContent = 'See History';
+            } else {
+                historyPanel.style.display = 'block';
+                this.textContent = 'Hide History';
+                // Update history display when showing
+                updateStackDisplay();
+            }
+        });
+        
+        document.getElementById('generateButton').addEventListener('click', async function() {
+            const prompt = document.getElementById('prompt').value;
+            const loadingIndicator = document.getElementById('loadingIndicator');
+            const responseOutput = document.getElementById('responseOutput');
+            const copyButton = document.getElementById('copyButton');
+
+            if (!prompt) {
+                alert('Please enter a prompt');
+                return;
+            }
+
+            // Show loading indicator
+            loadingIndicator.style.display = 'block';
+            responseOutput.textContent = '';
+            copyButton.style.display = 'none';
+
+            // Set up the request data for Cohere API
+            const requestData = {
+                model: "command",
+                prompt: prompt + " (Please provide only code as output, no explanations)",
+                max_tokens: 800,
+                temperature: 0.3, // Lower temperature for more predictable code generation
+                truncate: "END"
+            };
+
+            // Make the API request using fetch
+            try {
+                const response = await fetch('https://api.cohere.ai/v1/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiKey}`,
+                        'Cohere-Version': '2022-12-06'
+                    },
+                    body: JSON.stringify(requestData),
+                });
+
+                // Hide loading indicator
+                loadingIndicator.style.display = 'none';
+
+                if (response.ok) {
+                    const responseData = await response.json();
+                    const generatedText = responseData.generations[0].text;
+                    
+                    // Format the code with simple syntax highlighting
+                    const formattedCode = formatCodeOutput(generatedText);
+                    responseOutput.innerHTML = formattedCode;
+                    
+                    // Show copy button
+                    copyButton.style.display = 'block';
+                    
+                    // Create an item with unique ID
+                    const newItem = {
+                        id: Date.now().toString(), // Unique ID based on timestamp
+                        prompt: prompt,
+                        code: generatedText,
+                        timestamp: new Date().toISOString()
+                    };
+                    
+                    // Add to history stack
+                    historyStack.push(newItem);
+                    
+                    // Update history display only if panel is visible
+                    if (document.getElementById('historyPanel').style.display === 'block') {
+                        updateStackDisplay();
+                    }
+                    
+                } else {
+                    const errorData = await response.json();
+                    responseOutput.textContent = `Error: ${errorData.message || JSON.stringify(errorData)}`;
+                }
+            } catch (error) {
+                // Hide loading indicator
+                loadingIndicator.style.display = 'none';
+                responseOutput.textContent = `Error: ${error.message}`;
+            }
+        });
+
+        // Copy code functionality
+        document.getElementById('copyButton').addEventListener('click', function() {
+            const responseOutput = document.getElementById('responseOutput');
+            
+            // Create a temporary text area to copy from
+            const textArea = document.createElement('textarea');
+            textArea.value = responseOutput.textContent;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            
+            // Change button text temporarily
+            this.textContent = 'Copied!';
+            setTimeout(() => {
+                this.textContent = 'Copy Code';
+            }, 2000);
+        });
+
+        // Basic code formatting function
+        function formatCodeOutput(code) {
+            // Clean up the code
+            let cleanCode = code.trim();
+            
+            // Add basic syntax highlighting
+            // Replace < and > with their HTML entities to display properly
+            cleanCode = cleanCode.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+            
+            // Highlight keywords (very simple approach)
+            const keywords = [
+                "function", "return", "if", "else", "for", "while", "var", "let", 
+                "const", "class", "import", "export", "from", "async", "await", 
+                "try", "catch", "finally"
+            ];
+            
+            keywords.forEach(keyword => {
+                const regex = new RegExp(`\\b${keyword}\\b`, 'g');
+                cleanCode = cleanCode.replace(regex, `<span style="color: blue;">${keyword}</span>`);
+            });
+            
+            // Format code blocks
+            if (cleanCode.includes('```')) {
+                cleanCode = cleanCode.replace(/```(\w*)\n([\s\S]*?)```/g, 
+                    function(match, language, code) {
+                        return `<div class="syntax-highlight">${code}</div>`;
+                    });
+            }
+            
+            return cleanCode;
+        }
+        
+        // Update the stack display
+        function updateStackDisplay() {
+            const stackItems = document.getElementById('stackItems');
+            stackItems.innerHTML = '';
+            
+            const items = historyStack.getItems();
+            
+            if (items.length === 0) {
+                stackItems.innerHTML = '<p>No history items yet</p>';
+                return;
+            }
+            
+            items.forEach((item) => {
+                const historyItem = document.createElement('div');
+                historyItem.className = 'history-item';
+                
+                // Create a readable timestamp
+                const date = new Date(item.timestamp);
+                const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                
+                // Truncate the prompt if it's too long
+                const truncatedPrompt = item.prompt.length > 40 
+                    ? item.prompt.substring(0, 40) + '...' 
+                    : item.prompt;
+                
+                historyItem.textContent = `${formattedDate}: ${truncatedPrompt}`;
+                historyItem.title = item.prompt;
+                
+                historyItem.addEventListener('click', () => {
+                    // Load this item's data
+                    document.getElementById('prompt').value = item.prompt;
+                    const responseOutput = document.getElementById('responseOutput');
+                    responseOutput.innerHTML = formatCodeOutput(item.code);
+                    document.getElementById('copyButton').style.display = 'block';
+                });
+                
+                stackItems.appendChild(historyItem);
+            });
+        }
+        
+        // Clear stack button
+        document.getElementById('clearStackBtn').addEventListener('click', function() {
+            if (confirm('Are you sure you want to clear all history?')) {
+                historyStack.clear();
+                updateStackDisplay();
+            }
+        });
+        
+        // Save stack button
+        document.getElementById('saveStackBtn').addEventListener('click', function() {
+            const items = historyStack.getItems();
+            if (items.length === 0) {
+                alert('No history items to save');
+                return;
+            }
+            
+            // Create a text version of the history
+            let historyText = '# Cohere AI Code Generation History\n\n';
+            
+            items.forEach((item, index) => {
+                const date = new Date(item.timestamp);
+                const formattedDate = `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+                
+                historyText += `## ${index + 1}. ${formattedDate}\n\n`;
+                historyText += `### Prompt\n${item.prompt}\n\n`;
+                historyText += `### Generated Code\n\`\`\`\n${item.code}\n\`\`\`\n\n`;
+                historyText += '---\n\n';
+            });
+            
+            // Create a download link
+            const element = document.createElement('a');
+            const file = new Blob([historyText], {type: 'text/markdown'});
+            element.href = URL.createObjectURL(file);
+            element.download = 'code-generation-history.md';
+            document.body.appendChild(element);
+            element.click();
+            document.body.removeChild(element);
+        });
+    </script>
+</body>
+</html>
