@@ -1,0 +1,242 @@
+body {
+  margin: 0;
+  padding: 0;
+  background-color: #0a1929; /* darker navy blue background */
+  font-family: 'Segoe UI', Roboto, -apple-system, sans-serif;
+  color: #f0f7ff;
+  line-height: 1.6;
+}
+
+.container {
+  max-width: 900px;
+  margin: 40px auto;
+  background-color: #132f4c; /* slightly lighter navy blue */
+  padding: 30px;
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.4);
+}
+
+h2 {
+  text-align: center;
+  margin-bottom: 30px;
+  font-weight: 600;
+  color: #ffffff;
+  font-size: 28px;
+  border-bottom: 2px solid #2dd4bf; /* teal accent color */
+  padding-bottom: 10px;
+}
+
+select, textarea, button, input {
+  width: 100%;
+  padding: 12px;
+  margin-top: 15px;
+  margin-bottom: 15px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 1px solid #2c4c6e; /* border color */
+  outline: none;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+select {
+  background-color: #1e3a5f; /* darker blue for select */
+  color: #ffffff; /* Brighter white for better visibility */
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  background-size: 12px;
+  padding-right: 30px;
+  font-weight: 500; /* Slightly bolder text */
+}
+
+/* Code editor styling - THIS IS CRITICAL FOR TEXT VISIBILITY */
+.react-monaco-editor-container {
+  border-radius: 8px;
+  overflow: hidden;
+  margin: 15px 0;
+  border: 1px solid #2c4c6e;
+  height: 300px;
+  width: 100% !important;
+}
+
+/* Main code editor textarea */
+textarea.code-editor, 
+div.code-editor,
+textarea#code-editor,
+div#code-editor,
+[id*="code-editor"],
+[class*="code-editor"],
+textarea.inputarea,
+div.inputarea {
+  background-color: #ffffff !important;
+  color: #000000 !important;
+  font-family: 'Consolas', 'Monaco', monospace !important;
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+/* Ensuring editor text is visible */
+.monaco-editor,
+.monaco-editor-background,
+.monaco-editor .inputarea,
+.monaco-editor textarea,
+.monaco-editor .view-lines,
+.monaco-editor .view-line {
+  color: #000000 !important;
+  caret-color: #000000 !important;
+}
+
+/* Target content editable elements */
+[contenteditable="true"],
+[role="textbox"] {
+  color: #000000 !important;
+  background-color: #ffffff !important;
+}
+
+/* Additional styling to ensure code visibility */
+.view-lines span,
+.mtk1, .mtk2, .mtk3, .mtk4, .mtk5,
+.mtk6, .mtk7, .mtk8, .mtk9, .mtk10 {
+  color: #000000 !important;
+}
+
+/* Target specific language tokens */
+.token.keyword { color: #0000ff !important; }
+.token.string { color: #a31515 !important; }
+.token.comment { color: #008000 !important; }
+.token.function { color: #795e26 !important; }
+.token.number { color: #098658 !important; }
+
+textarea {
+  background-color: #f8fafc; /* Light background for better contrast */
+  color: #0f172a; /* Dark text for visibility */
+  resize: vertical;
+  min-height: 80px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 15px; /* Slightly larger for code */
+  line-height: 1.5;
+}
+
+/* Input field for stdin */
+input[type="text"], 
+textarea[placeholder="Enter input (stdin)"] {
+  background-color: #f8fafc;
+  color: #0f172a;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 15px;
+}
+
+textarea::placeholder, 
+input::placeholder {
+  color: #64748b; /* Medium gray for placeholder text */
+  opacity: 1; /* Ensure opacity is fully visible */
+}
+
+textarea:focus, select:focus, input:focus {
+  border-color: #2dd4bf; /* teal accent color */
+  box-shadow: 0 0 0 2px rgba(45, 212, 191, 0.3);
+}
+
+button {
+  background-color: #2dd4bf; /* teal accent color */
+  color: #0a1929; /* dark text on light button */
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+button:hover {
+  background-color: #14b8a6; /* darker teal on hover */
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(45, 212, 191, 0.3);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+pre {
+  background-color: #091521; /* darker navy for code output */
+  padding: 20px;
+  border-radius: 8px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  color: #4ade80; /* light green for code output */
+  margin-top: 20px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  overflow-x: auto;
+  border-left: 4px solid #2dd4bf; /* teal accent color */
+  max-height: 300px;
+  overflow-y: auto;
+  animation: fadeIn 0.5s ease;
+  font-size: 15px; /* Ensure output text is readable */
+}
+
+/* Line numbers styling */
+.line-numbers,
+.margin-view-overlays,
+.line-numbers div {
+  color: #6b7280 !important;
+  background-color: #f1f5f9 !important;
+}
+
+/* Ensure console output is visible */
+.output-area {
+  background-color: #091521;
+  color: #4ade80; /* Light green for good visibility */
+  padding: 16px;
+  border-radius: 8px;
+  font-family: 'Consolas', 'Monaco', monospace;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+/* Additional contrast for error messages */
+.error-message {
+  color: #f87171; /* Light red for errors */
+  font-weight: 500;
+}
+
+@media (max-width: 768px) {
+  .container {
+    margin: 20px;
+    padding: 20px;
+  }
+
+  h2 {
+    font-size: 24px;
+  }
+}
+
+button.loading {
+  position: relative;
+  pointer-events: none;
+}
+
+button.loading:after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s ease infinite;
+  right: 15px;
+  top: calc(50% - 10px);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0.6; }
+  to { opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
