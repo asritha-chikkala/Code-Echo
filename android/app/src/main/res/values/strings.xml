@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Code Echo</string>
-    <string name="title_activity_main">Code Echo</string>
-    <string name="package_name">com.codeecho.app</string>
-    <string name="custom_url_scheme">com.codeecho.app</string>
-</resources>
