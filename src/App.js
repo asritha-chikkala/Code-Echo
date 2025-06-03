@@ -24,7 +24,7 @@ function App() {
           headers: {
             'Content-Type': 'application/json',
             'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
-            'X-RapidAPI-Key': '9548844ea1mshfd3ab7a2cbdbaefp1e9954jsn869ec50136f5' // Replace with your key
+            'X-RapidAPI-Key': 'replace with ur api key' // Replace with your key
           },
         }
       );
