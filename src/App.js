@@ -3,7 +3,6 @@ import Editor from './components/Editor';
 import axios from 'axios';
 import './App.css';
 
-
 function App() {
   const [code, setCode] = useState('// Write your code here');
   const [input, setInput] = useState('');
@@ -24,11 +23,12 @@ function App() {
           headers: {
             'Content-Type': 'application/json',
             'X-RapidAPI-Host': 'judge0-ce.p.rapidapi.com',
-            'X-RapidAPI-Key': 'replace with ur api key' // Replace with your key
+            'X-RapidAPI-Key': 'c8da0af18bmshe843492da1eb95cp1db08cjsn85efc1a4bd87'  // <-- Replace this line
           },
         }
       );
 
+      // Display stdout, or stderr, or compile output if present
       setOutput(data.stdout || data.stderr || data.compile_output || 'No output');
     } catch (err) {
       console.error(err);
@@ -38,30 +38,29 @@ function App() {
 
   return (
     <div className="container">
-      <h2>💻  Code Compiler</h2>
-  
+      <h2>💻 Code Compiler</h2>
+
       <select value={language} onChange={(e) => setLanguage(e.target.value)}>
         <option value="71">Python</option>
         <option value="62">Java</option>
         <option value="54">C++</option>
         <option value="50">C</option>
       </select>
-  
+
       <Editor code={code} setCode={setCode} />
-  
+
       <textarea
         rows={5}
         placeholder="Enter input (stdin)"
         value={input}
         onChange={(e) => setInput(e.target.value)}
       />
-  
+
       <button onClick={runCode}>Run</button>
-  
+
       <pre>{output}</pre>
     </div>
   );
-  
 }
 
 export default App;

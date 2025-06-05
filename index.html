@@ -27,14 +27,8 @@
 
         body {
             background-color: var(--bg-color);
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            padding: 0;
-            margin: 0;
             color: var(--dark-color);
-            overflow: hidden;
+            overflow-x: hidden;
         }
 
         .dashboard-container {
@@ -43,7 +37,6 @@
             height: 100vh;
             background-color: transparent;
             position: relative;
-            overflow: hidden;
         }
 
         /* Sidebar Styling */
@@ -54,8 +47,10 @@
             padding: 30px 15px;
             display: flex;
             flex-direction: column;
-            z-index: 1;
+            z-index: 1000;
             box-shadow: inset -5px 0 15px rgba(0, 0, 0, 0.05);
+            position: relative;
+            transition: var(--transition);
         }
 
         .logo-container {
@@ -138,7 +133,7 @@
 
         /* Content Area Styling */
         .content-area {
-            flex-grow: 1;
+            flex: 1;
             display: flex;
             flex-direction: column;
             position: relative;
@@ -155,6 +150,7 @@
             background-color: rgba(255, 255, 255, 0.8);
             backdrop-filter: blur(5px);
             z-index: 2;
+            position: relative;
         }
 
         .page-title {
@@ -190,7 +186,7 @@
 
         /* Content Pages */
         .content-container {
-            flex-grow: 1;
+            flex: 1;
             padding: 20px 30px;
             overflow-y: auto;
             position: relative;
@@ -260,6 +256,7 @@
             justify-content: center;
             gap: 20px;
             margin-top: 40px;
+            flex-wrap: wrap;
         }
 
         .quick-link {
@@ -295,78 +292,69 @@
             background-color: #f9f9f9;
         }
 
-        /* Responsive Design */
-        @media (max-width: 992px) {
-            .sidebar {
-                width: 220px;
-                padding: 20px 10px;
-            }
-
-            .featured-image {
-                max-width: 90%;
-                border-radius: 20px;
-            }
+        .team {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 60px;
         }
 
-        @media (max-width: 768px) {
-            .dashboard-container {
-                flex-direction: column;
-            }
+        .member {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
 
-            .sidebar {
-                width: 100%;
-                height: auto;
-                padding: 15px;
-            }
-
-            .nav-menu {
-                flex-direction: row;
-                flex-wrap: wrap;
-                justify-content: center;
-                gap: 10px;
-            }
-
-            .nav-item {
-                width: auto;
-            }
-
-            .logo-container {
-                margin-bottom: 15px;
-            }
-
-            .content-area {
-                height: calc(100vh - 120px);
-            }
-
-            .welcome-heading {
-                font-size: 2rem;
-            }
-
-            .quick-links {
-                flex-direction: column;
-                align-items: center;
-            }
+        .member-name {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: #34495e;
         }
 
         /* Mobile Menu Toggle */
         .menu-toggle {
             display: none;
             position: fixed;
-            top: 15px;
-            left: 15px;
+            top: 20px;
+            left: 20px;
             background: var(--primary-color);
             color: white;
             border: none;
             border-radius: 50%;
             width: 45px;
             height: 45px;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             cursor: pointer;
-            z-index: 100;
+            z-index: 1001;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            transition: var(--transition);
         }
 
+        .menu-toggle:hover {
+            background: #1e5a99;
+            transform: scale(1.05);
+        }
+
+        /* Overlay for mobile menu */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 999;
+        }
+
+        /* Mobile Responsive Styles */
         @media (max-width: 768px) {
+            .dashboard-container {
+                flex-direction: row;
+            }
+
             .menu-toggle {
                 display: flex;
                 align-items: center;
@@ -377,45 +365,161 @@
                 position: fixed;
                 left: -100%;
                 top: 0;
+                width: 280px;
                 height: 100vh;
                 transition: left 0.3s ease;
-                z-index: 99;
+                z-index: 1000;
+                box-shadow: 5px 0 15px rgba(0, 0, 0, 0.2);
             }
 
             .sidebar.active {
                 left: 0;
             }
 
+            .sidebar-overlay.active {
+                display: block;
+            }
+
             .content-area {
-                height: 100vh;
                 width: 100%;
+                height: 100vh;
+            }
+
+            .header {
+                padding: 20px 20px 20px 80px;
+                min-height: 70px;
+            }
+
+            .page-title {
+                font-size: 1.3rem;
+                margin-left: 10px;
+            }
+
+            .content-container {
+                padding: 15px 20px;
+            }
+
+            .welcome-heading {
+                font-size: 2rem;
+            }
+
+            .welcome-subheading {
+                font-size: 1rem;
+            }
+
+            .quick-links {
+                flex-direction: column;
+                align-items: center;
+                gap: 15px;
+            }
+
+            .featured-image {
+                max-width: 95%;
+                border-radius: 15px;
+            }
+
+            .team {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+
+            .nav-menu {
+                gap: 10px;
+            }
+
+            .nav-item a {
+                padding: 12px 18px;
+                font-size: 0.9rem;
+            }
+
+            .logo-text {
+                font-size: 1.3rem;
+            }
+
+            .logo-container {
+                margin-bottom: 30px;
             }
         }
-.team {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 20px;
-      margin-bottom: 60px;
-    }
 
-    .member {
-      background-color: #fff;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-      text-align: center;
-    }
-.member-name {
-      font-weight: bold;
-      font-size: 1.1em;
-      color: #34495e;
-    }
+        @media (max-width: 480px) {
+            .menu-toggle {
+                top: 15px;
+                left: 15px;
+                width: 42px;
+                height: 42px;
+                font-size: 1rem;
+            }
+
+            .sidebar {
+                width: 260px;
+            }
+
+            .header {
+                padding: 15px 15px 15px 70px;
+                min-height: 65px;
+            }
+
+            .page-title {
+                font-size: 1.2rem;
+                margin-left: 5px;
+            }
+
+            .welcome-heading {
+                font-size: 1.7rem;
+            }
+
+            .content-container {
+                padding: 10px 15px;
+            }
+
+            .quick-link {
+                padding: 14px 20px;
+                font-size: 0.9rem;
+            }
+
+            .nav-item a {
+                padding: 10px 15px;
+                font-size: 0.85rem;
+            }
+
+            .logo-text {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 360px) {
+            .menu-toggle {
+                top: 12px;
+                left: 12px;
+                width: 38px;
+                height: 38px;
+                font-size: 0.9rem;
+            }
+
+            .header {
+                padding: 12px 12px 12px 60px;
+                min-height: 60px;
+            }
+
+            .page-title {
+                font-size: 1.1rem;
+                margin-left: 5px;
+            }
+
+            .welcome-heading {
+                font-size: 1.5rem;
+            }
+        }
     </style>
 </head>
 <body>
+    <!-- Mobile Menu Toggle -->
     <button class="menu-toggle" id="menu-toggle">
         <i class="fas fa-bars"></i>
     </button>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <div class="dashboard-container">
         <!-- Sidebar -->
@@ -427,22 +531,22 @@
             
             <ul class="nav-menu">
                 <li class="nav-item active">
-                    <a href="#" data-page="home">
+                    <a href="index.html" data-page="home">
                         <i class="fas fa-home"></i>HOME
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" data-page="get-code">
+                    <a href="fullcode3.html" data-page="get-code">
                         <i class="fas fa-file-code"></i>GET CODE
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" data-page="get-suggestions">
+                    <a href="MultiLanguageSuggester2.html" data-page="get-suggestions">
                         <i class="fas fa-lightbulb"></i>SUGGESTIONS
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" data-page="compiler">
+                    <a href="compiler.html" data-page="compiler">
                         <i class="fas fa-terminal"></i>COMPILER
                     </a>
                 </li>
@@ -457,7 +561,7 @@
                     </a>
                 </li>
                 <li class="nav-item">
-                    <a href="#" data-page="working">
+                    <a href="working.html" data-page="working">
                         <i class="fas fa-cogs"></i>WORKING OF CODE ECHO
                     </a>
                 </li>
@@ -473,7 +577,6 @@
             <!-- Header -->
             <div class="header">
                 <div class="page-title" id="current-page-title">Home</div>
-                
             </div>
             
             <!-- Content Container -->
@@ -517,81 +620,68 @@
                     <iframe class="content-frame" src="compiler.html"></iframe>
                 </div>
                 
-                <!-- working Page -->
+                <!-- Working Page -->
                 <div class="page-content" id="working">
                     <iframe class="content-frame" src="working.html"></iframe>
                 </div>
-<!-- Contact Page -->
-<div class="page-content" id="contact">
-    <div class="welcome-section">
-        <h1 class="welcome-heading">Get in Touch</h1>
-        <p class="welcome-subheading">We'd love to hear from you!</p>
-    </div>
-    <div style="padding: 20px; max-width: 600px; margin: 0 auto; text-align: center;">
-        <p><strong>Email:</strong> <a href="mailto:support@codeecho.com">support@codeecho.com</a></p>
-        <p><strong>Phone:</strong> +91 98765 43210</p>
-        <p><strong>Address:</strong> 123, Developer Street, Tech City, India</p>
-        <p><strong>Follow us:</strong></p>
-        <p>
-            <a href="#"><i class="fab fa-twitter"></i></a>&nbsp;
-            <a href="#"><i class="fab fa-github"></i></a>&nbsp;
-            <a href="#"><i class="fab fa-linkedin"></i></a>
-        </p>
-    </div>
-</div>
 
-                
-               <!-- About Us Page -->
-<div class="page-content" id="about-us">
-    <div class="welcome-section">
-        <h1 class="welcome-heading">About Code Echo</h1>
-        <p class="welcome-subheading">Empowering developers through automation and smart suggestions.</p>
-    </div>
-    <div style="padding: 10px; max-width: 700px; margin: 0 auto; line-height: 1.6;">
-        <p>
-            Code Echo is a platform built to streamline the coding experience by providing automated code solutions,
-            smart suggestions, and an integrated compiler. Our goal is to make development faster, smarter, and more efficient
-            for students, professionals, and hobbyists alike.
-        </p>
-        <p>
-            Whether you're building web applications, experimenting with code snippets, or looking for multi-language
-            recommendations, Code Echo has got you covered.
-        </p>
-        <p>
-            <strong>Our Mission:</strong> To bridge the gap between an idea and its implementation using intuitive tools.
-        </p><br><br>
-<div class="about-card">
-      <h2 align="center">🌟 Why Choose Us?</h2>
-      <ul>
-        <li>⚡ Instant code suggestions & examples</li>
-        <li>🧠 AI-driven logic assistant</li>
-        <li>📱 Mobile-friendly and responsive</li>
-        <li>🔧 Real-time code compiler</li>
-      </ul>
-    </div><br><br>
-<div class="team">
-      <div class="member">
-        <div class="member-name">Ch.Asritha</div>
-      </div>
-      <div class="member">
-        <div class="member-name">K.V.N.S.Hasini</div>
-      </div>
-      <div class="member">
-        <div class="member-name">A.Radhadevi</div>
-      </div>
-    </div>
-</div>
+                <!-- Contact Page -->
+                <div class="page-content" id="contact">
+                    <div class="welcome-section">
+                        <h1 class="welcome-heading">Get in Touch</h1>
+                        <p class="welcome-subheading">We'd love to hear from you!</p>
+                    </div>
+                    <div style="padding: 20px; max-width: 600px; margin: 0 auto; text-align: center;">
+                        <p><strong>Email:</strong> <a href="mailto:support@codeecho.com">email@example.com</a></p>
+                        <p><strong>Phone:</strong> +91 00000 00000</p>
+                        <p><strong>Address:</strong> 123, Placeholder Road, City</p>
+                    </div>
+                </div>
 
-
-
-                
-                
-
-                
-              
-
-                
-                
+                <!-- About Us Page -->
+                <div class="page-content" id="about-us">
+                    <div class="welcome-section">
+                        <h1 class="welcome-heading">About Code Echo</h1>
+                        <p class="welcome-subheading">Empowering developers through automation and smart suggestions.</p>
+                    </div>
+                    <div style="padding: 10px; max-width: 700px; margin: 0 auto; line-height: 1.6;">
+                        <p>
+                            Code Echo is a platform built to streamline the coding experience by providing automated code solutions,
+                            smart suggestions, and an integrated compiler. Our goal is to make development faster, smarter, and more efficient
+                            for students, professionals, and hobbyists alike.
+                        </p>
+                        <p>
+                            Whether you're building web applications, experimenting with code snippets, or looking for multi-language
+                            recommendations, Code Echo has got you covered.
+                        </p>
+                        <p>
+                            <strong>Our Mission:</strong> To bridge the gap between an idea and its implementation using intuitive tools.
+                        </p><br><br>
+                        <div class="about-card">
+                            <h2 align="center">🌟 Why Choose Us?</h2>
+                            <ul>
+                                <li>⚡ Instant code suggestions & examples</li>
+                                <li>🧠 AI-driven logic assistant</li>
+                                <li>📱 Mobile-friendly and responsive</li>
+                                <li>🔧 Real-time code compiler</li>
+                            </ul>
+                        </div><br><br>
+                        <div class="team">
+                            <div class="member">
+                                <div class="member-name">Ch.Asritha</div>
+                                <a href="https://www.linkedin.com/in/asritha-chikkala-300397336/"><i class="fab fa-linkedin"></i></a>
+                            </div>
+                            <div class="member">
+                                <div class="member-name">K.V.N.S.Hasini</div>
+                                <a href="https://www.linkedin.com/in/bala-sri-hasini-koppuravuri-483327338/"><i class="fab fa-linkedin"></i></a>
+                            </div>
+                            <div class="member">
+                                <div class="member-name">A.Radhadevi</div>
+                                <a href="https://www.linkedin.com/in/radhadevi-aravapalli-17242a32a/"><i class="fab fa-linkedin"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -603,6 +693,7 @@
             const pageTitle = document.getElementById('current-page-title');
             const menuToggle = document.getElementById('menu-toggle');
             const sidebar = document.getElementById('sidebar');
+            const sidebarOverlay = document.getElementById('sidebar-overlay');
             
             // Function to activate a page
             function activatePage(pageId) {
@@ -623,12 +714,27 @@
                 });
                 
                 // Show the selected page
-                document.getElementById(pageId).classList.add('active');
-                
-                // On mobile, close the sidebar after selecting a page
-                if (window.innerWidth <= 768) {
-                    sidebar.classList.remove('active');
+                const targetPage = document.getElementById(pageId);
+                if (targetPage) {
+                    targetPage.classList.add('active');
                 }
+                
+                // Close mobile sidebar
+                closeMobileSidebar();
+            }
+            
+            // Function to close mobile sidebar
+            function closeMobileSidebar() {
+                sidebar.classList.remove('active');
+                sidebarOverlay.classList.remove('active');
+                menuToggle.innerHTML = '<i class="fas fa-bars"></i>';
+            }
+            
+            // Function to open mobile sidebar
+            function openMobileSidebar() {
+                sidebar.classList.add('active');
+                sidebarOverlay.classList.add('active');
+                menuToggle.innerHTML = '<i class="fas fa-times"></i>';
             }
             
             // Nav menu click handlers
@@ -651,8 +757,22 @@
             
             // Mobile menu toggle
             if (menuToggle) {
-                menuToggle.addEventListener('click', function() {
-                    sidebar.classList.toggle('active');
+                menuToggle.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    
+                    if (sidebar.classList.contains('active')) {
+                        closeMobileSidebar();
+                    } else {
+                        openMobileSidebar();
+                    }
+                });
+            }
+            
+            // Sidebar overlay click handler
+            if (sidebarOverlay) {
+                sidebarOverlay.addEventListener('click', function() {
+                    closeMobileSidebar();
                 });
             }
             
@@ -661,15 +781,28 @@
                 if (window.innerWidth <= 768 && 
                     !sidebar.contains(e.target) && 
                     e.target !== menuToggle && 
+                    !menuToggle.contains(e.target) &&
                     sidebar.classList.contains('active')) {
-                    sidebar.classList.remove('active');
+                    closeMobileSidebar();
                 }
+            });
+            
+            // Prevent sidebar clicks from bubbling
+            sidebar.addEventListener('click', function(e) {
+                e.stopPropagation();
             });
             
             // Responsive handling
             window.addEventListener('resize', function() {
                 if (window.innerWidth > 768) {
-                    sidebar.classList.remove('active');
+                    closeMobileSidebar();
+                }
+            });
+            
+            // Handle escape key to close mobile menu
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape' && sidebar.classList.contains('active')) {
+                    closeMobileSidebar();
                 }
             });
             
